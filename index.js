@@ -47,10 +47,10 @@ app.post("/api/quote", async (req, res) => {
     await transporter.sendMail(mailOptions);
 
     res.json({ message: "Your request has been submitted successfully!" });
-  } catch (err) {
-    console.error("❌ Error sending email:", err);
-    res.status(500).json({ message: "Failed to send your request. Try again later." });
-  }
+  }catch (err) {
+  console.error("❌ Error sending email:", err.message, err.response || err);
+  res.status(500).json({ message: err.message || "Failed to send your request." });
+}
 });
 
 // ✅ Health check
