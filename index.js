@@ -18,20 +18,19 @@ app.post("/api/quote", async (req, res) => {
   }
 
   try {
-    // Configure Nodemailer transport
+    // Gmail SMTP transport
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST, // e.g., "smtp-relay.sendinblue.com"
-      port: 587,
+      service: "gmail",
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
     // Email content
     const mailOptions = {
-      from: `"Fence Website" <${process.env.SMTP_USER}>`,
-      to: process.env.RECEIVER_EMAIL, // your email where you want to receive form submissions
+      from: `"Fence Website" <${process.env.EMAIL_USER}>`,
+      to: process.env.TO_EMAIL, // where you want to receive the form
       subject: "New Quote Request",
       text: `
         Name: ${firstName} ${lastName}
@@ -43,7 +42,6 @@ app.post("/api/quote", async (req, res) => {
       `,
     };
 
-    // Send email
     await transporter.sendMail(mailOptions);
 
     res.json({ message: "Your request has been submitted successfully!" });
@@ -58,6 +56,6 @@ app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
 
-// Render will give a PORT automatically
+// Use Render's PORT or default 5000
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
