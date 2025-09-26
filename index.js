@@ -3,54 +3,61 @@ import cors from "cors";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 
-dotenv.config({ path: "./.env" });
-
+dotenv.config();
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
- const transporter = nodemailer.createTransport({
-      service: "gmail", // or use host, port, secure
+// ✅ Quote API route
+app.post("/api/quote", async (req, res) => {
+  const { firstName, lastName, phone, email, zip, message, consent } = req.body;
+
+  if (!firstName || !lastName || !phone || !email || !zip || !message) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    // Configure Nodemailer transport
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST, // e.g., "smtp-relay.sendinblue.com"
+      port: 587,
       auth: {
-        user: process.env.EMAIL_USER, // your email
-        pass: process.env.EMAIL_PASS, // app password
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
 
-// Verify SMTP connection
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("SMTP connection failed:", error);
-  } else {
-    console.log("SMTP server is ready to send messages.");
-  }
-});
-
-app.post("/api/quote", async (req, res) => {
-  try {
-    const { firstName, lastName, phone, email, zip, message } = req.body;
-
+    // Email content
     const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.TO_EMAIL,
-      subject: "New Fence Quote Request",
+      from: `"Fence Website" <${process.env.SMTP_USER}>`,
+      to: process.env.RECEIVER_EMAIL, // your email where you want to receive form submissions
+      subject: "New Quote Request",
       text: `
-Name: ${firstName} ${lastName}
-Phone: ${phone}
-Email: ${email}
-Zip: ${zip}
-Message: ${message}
+        Name: ${firstName} ${lastName}
+        Phone: ${phone}
+        Email: ${email}
+        Zip: ${zip}
+        Message: ${message}
+        Consent: ${consent ? "Yes" : "No"}
       `,
     };
 
+    // Send email
     await transporter.sendMail(mailOptions);
-    res.status(200).json({ success: true, message: "Email sent successfully!" });
+
+    res.json({ message: "Your request has been submitted successfully!" });
   } catch (err) {
-    console.error("Error sending email:", err.response || err.message || err);
-    res.status(500).json({ success: false, message: "Failed to send email" });
+    console.error("Error sending email:", err);
+    res.status(500).json({ message: "Failed to send your request. Try again later." });
   }
 });
 
-app.listen(process.env.PORT, () =>
-  console.log(`Backend running on port ${process.env.PORT}`)
-);
+// ✅ Health check
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
+// Render will give a PORT automatically
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
