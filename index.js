@@ -18,9 +18,11 @@ app.post("/api/quote", async (req, res) => {
   }
 
   try {
-    // Gmail SMTP transport
+    // Gmail SMTP transport (explicit config)
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // true = 465, false = 587
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -30,7 +32,7 @@ app.post("/api/quote", async (req, res) => {
     // Email content
     const mailOptions = {
       from: `"Fence Website" <${process.env.EMAIL_USER}>`,
-      to: process.env.TO_EMAIL, // where you want to receive the form
+      to: process.env.TO_EMAIL,
       subject: "New Quote Request",
       text: `
         Name: ${firstName} ${lastName}
@@ -46,7 +48,7 @@ app.post("/api/quote", async (req, res) => {
 
     res.json({ message: "Your request has been submitted successfully!" });
   } catch (err) {
-    console.error("Error sending email:", err);
+    console.error("❌ Error sending email:", err);
     res.status(500).json({ message: "Failed to send your request. Try again later." });
   }
 });
@@ -56,6 +58,6 @@ app.get("/", (req, res) => {
   res.send("Backend is running 🚀");
 });
 
-// Use Render's PORT or default 5000
+// Render will give a PORT, or fallback to 5000
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
